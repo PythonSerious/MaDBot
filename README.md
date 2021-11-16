@@ -1,0 +1,2 @@
+# MaDBot
+MaD Discord bot
