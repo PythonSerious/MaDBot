@@ -1,5 +1,6 @@
 {
   "token": "bot-token",
   "approvedGuilds": [],
-  "prefix": "!"
+  "prefix": "!",
+  "devMode": true
 }
