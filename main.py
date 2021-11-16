@@ -10,7 +10,16 @@ def prefix(new=False):
             jsonfile = json.load(rawFile)
             return jsonfile["prefix"]
 
-def devMode
+def devMode(toggle=False):
+    with open("./config/generalConfiguration.json", "r") as rawFile:
+        jsonfile = json.load(rawFile)
+        if not toggle:
+            return jsonfile["devMode"]
+        with open("./config/generalConfiguration.json", "w") as f:
+            jsonfile["devMode"] = not jsonfile["devMode"]
+            json.dump(jsonfile, f, indent=4)
+            return jsonfile["devMode"]
+
 
 bot = Bot(command_prefix=prefix())
 slash = SlashCommand(bot)
