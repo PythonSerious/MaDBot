@@ -24,8 +24,7 @@ def devMode(toggle=False):
 bot = Bot(command_prefix=prefix())
 slash = SlashCommand(bot)
 
-
-
-
-
-
+@slash.slash(name="create")
+async def _create(ctx: SlashContext):
+    embed = Embed(title="Empheral Message")
+    await ctx.send(embed=embed, hidden=True)
