@@ -26,7 +26,7 @@ def devMode(toggle=False):
             return jsonfile["devMode"]
 
 
-bot = Bot(command_prefix=prefix())
+bot = Bot(command_prefix=prefix(), Intents=Intents.all())
 slash = SlashCommand(bot)
 
 @slash.slash(name="create")
