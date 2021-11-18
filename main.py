@@ -3,6 +3,11 @@ from discord_slash import SlashCommand, SlashContext
 from discord.ext.commands import Bot
 import json
 
+def token():
+    with open("./config/generalConfiguration.json", "r") as rawFile:
+        jsonfile = json.load(rawFile)
+        return jsonfile["token"]
+
 
 def prefix(new=False):
     if not new:
@@ -28,3 +33,6 @@ slash = SlashCommand(bot)
 async def _create(ctx: SlashContext):
     embed = Embed(title="Empheral Message")
     await ctx.send(embed=embed, hidden=True)
+
+
+bot.run(token(), bot=True)
