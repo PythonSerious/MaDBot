@@ -34,6 +34,8 @@ def devMode(toggle=False):
 bot = Bot(command_prefix=prefix(), Intents=Intents.all())
 slash = SlashCommand(bot, sync_commands=True, sync_on_cog_reload=True, override_type=False)
 
+bot.remove_command('help')
+
 async def validator(ctx, list, objectName, object, msg, questionEmbed, inptype, comps=None):
     buttons = [
         create_button(style=ButtonStyle.green, label="Yes"),
