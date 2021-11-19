@@ -92,7 +92,7 @@ async def imageValidator(ctx, msg, response, questionEmbed, list):
         url = response.attachments[0].url
     elif not response.attachments:
         if "http" in response.content and "://" in response.content:
-            bannedextensions = ["com", "bat", "py", "cs", "c", "cpp", "js", "jar", "exe"]
+            bannedextensions = ["bat", "py", "cs", "c", "cpp", "js", "jar", "exe"]
             url = response.content
             for entry in bannedextensions:
                 if f".{entry}" in url:
@@ -180,8 +180,16 @@ async def imageValidator(ctx, msg, response, questionEmbed, list):
         await response.delete()
         return await imageValidator(button_ctx, msg, response, questionEmbed, list)
 
+@bot.command(name="create")
+async def create(ctx):
+    embed = Embed(description=f"> :no_entry_sign: **Please use the slash command!**\n", color=0x2f3136)
+    embed.set_author(
+        icon_url="https://cdn.discordapp.com/icons/638963040691290114/b4e6d524951945366ab6d68fbe85523e.png?size=4096",
+        name="Bug report system")
+    embed.set_image(url="https://cdn.squarebot.app/DiscordDevelopment_pW7k7NAQSz.png")
+    await ctx.send(embed=embed, components=[])
 
-@slash.slash(name="create")
+@slash.slash(name="create" , description="Create a bug report.")
 async def _create(ctx: SlashContext):
     embed = Embed(title="Select Board:", description="> Select a list you would like to submit to.", color=0x2f3136)
     embed.set_author(
@@ -255,75 +263,138 @@ async def _create(ctx: SlashContext):
             await msg.edit(embed=embed, components=[])
             return [False, 0]
         await response.delete()
-        validatedResponse = await validator(button_ctx, "Building Bugs", "description", response, msg, embed, "message")
+        validatedResponse = await validator(button_ctx, title, "description", response, msg, embed, "message")
         descr = validatedResponse[1]
         if validatedResponse:
-            embed = Embed(title=f"{list}:", description="> Attach evidence below. (url or uploaded file)",
-                          color=0x2f3136)
+            embed = Embed(color=0x2f3136, title=title, description=f"**Description**\n> Would you like to add an image?")
             embed.set_author(
                 icon_url="https://cdn.discordapp.com/icons/638963040691290114/b4e6d524951945366ab6d68fbe85523e.png?size=4096",
                 name="Bug report system")
-            await msg.edit(embed=embed, components=[])
-
-            def check(m):
-                return ctx.channel.id == m.channel.id and m.author.id == ctx.author.id
+            buttons = [
+                create_button(style=ButtonStyle.green, label="Yes"),
+                create_button(style=ButtonStyle.red, label="No")
+            ]
+            action_row = create_actionrow(*buttons)
+            await msg.edit(embed=embed, components=[action_row])
             try:
-                response = await bot.wait_for('message', check=check, timeout=500)
+                button_ctx: ComponentContext = await wait_for_component(bot, components=action_row,
+                                                                        check=componentCheck, timeout=25)
             except:
                 embed = Embed(description=f"> **The timeout has been reached.**\n", color=0x2f3136)
                 embed.set_author(
                     icon_url="https://cdn.discordapp.com/icons/638963040691290114/b4e6d524951945366ab6d68fbe85523e.png?size=4096",
                     name="Bug report system")
                 await msg.edit(embed=embed, components=[])
-                return [False, 0]
-            await response.delete()
-            validatedResponse = await imageValidator(button_ctx, msg, response, embed, list)
-            link = validatedResponse[1]
-            if validatedResponse:
-                if list == "Script Bugs":
-                    color = 0xc773df
-                elif list == "Building Bugs":
-                    color = 0x1c76bf
-                else:
-                    color = 0xf5f5f5
-                embed = Embed(color=color, title=title, description=f"**Description**\n> {descr}\n\n**Attachment**")
-                embed.set_image(url=link)
+            label = button_ctx.component["label"]
+            if label == "Yes":
+                embed = Embed(title=f"{list}:", description="> Attach evidence below. (url or uploaded file)",
+                              color=0x2f3136)
                 embed.set_author(
                     icon_url="https://cdn.discordapp.com/icons/638963040691290114/b4e6d524951945366ab6d68fbe85523e.png?size=4096",
-                    name="Bug report [CARD PREVIEW]")
-                buttons = [
-                    create_button(style=ButtonStyle.green, label="Yes"),
-                    create_button(style=ButtonStyle.red, label="No (Cancel Progress)")
-                ]
-                action_row = create_actionrow(*buttons)
+                    name="Bug report system")
+                await msg.edit(embed=embed, components=[])
 
-                if response.attachments:
-                    url = response.attachments[0].url
-                elif not response.attachments:
-                    url = response
-
-                await msg.edit(embed=embed, components=[action_row])
-
-                def componentCheck(interaction):  # interaction is a ComponentContext type
-                    return ctx.author.id == interaction.author.id
+                def check(m):
+                    return ctx.channel.id == m.channel.id and m.author.id == ctx.author.id
                 try:
-                    button_ctx: ComponentContext = await wait_for_component(bot, components=action_row,
-                                                                        check=componentCheck, timeout=25)
+                    response = await bot.wait_for('message', check=check, timeout=500)
                 except:
                     embed = Embed(description=f"> **The timeout has been reached.**\n", color=0x2f3136)
                     embed.set_author(
                         icon_url="https://cdn.discordapp.com/icons/638963040691290114/b4e6d524951945366ab6d68fbe85523e.png?size=4096",
                         name="Bug report system")
                     await msg.edit(embed=embed, components=[])
-                label = button_ctx.component["label"]
-                if label == "Yes":
-                    await ctx.send("Do wizardly trello post shit here.")
-                else:
-                    embed = Embed(title=f"{list}:", description="> Card Canceled.", color=0x2f3136)
+                    return [False, 0]
+                await response.delete()
+                validatedResponse = await imageValidator(button_ctx, msg, response, embed, list)
+                link = validatedResponse[1]
+                if validatedResponse:
+                    if list == "Script Bugs":
+                        color = 0xc773df
+                    elif list == "Building Bugs":
+                        color = 0x1c76bf
+                    else:
+                        color = 0xf5f5f5
+                    embed = Embed(color=color, title=title, description=f"**Description**\n> {descr}\n\n**Attachment**")
+                    embed.set_image(url=link)
                     embed.set_author(
                         icon_url="https://cdn.discordapp.com/icons/638963040691290114/b4e6d524951945366ab6d68fbe85523e.png?size=4096",
-                        name="Bug report system")
-                    await msg.edit(embed=embed, components=[])
+                        name="Bug report [CARD PREVIEW]")
+                    buttons = [
+                        create_button(style=ButtonStyle.green, label="Yes"),
+                        create_button(style=ButtonStyle.red, label="No (Cancel Progress)")
+                    ]
+                    action_row = create_actionrow(*buttons)
+
+                    if response.attachments:
+                        url = response.attachments[0].url
+                    elif not response.attachments:
+                        url = response
+
+                    await msg.edit(embed=embed, components=[action_row])
+
+                    def componentCheck(interaction):  # interaction is a ComponentContext type
+                        return ctx.author.id == interaction.author.id
+                    try:
+                        button_ctx: ComponentContext = await wait_for_component(bot, components=action_row,
+                                                                                check=componentCheck, timeout=25)
+                    except:
+                        embed = Embed(description=f"> **The timeout has been reached.**\n", color=0x2f3136)
+                        embed.set_author(
+                            icon_url="https://cdn.discordapp.com/icons/638963040691290114/b4e6d524951945366ab6d68fbe85523e.png?size=4096",
+                            name="Bug report system")
+                        await msg.edit(embed=embed, components=[])
+                    label = button_ctx.component["label"]
+                    if label == "Yes":
+                        await ctx.send("Do wizardly trello post shit here.")
+                    else:
+                        embed = Embed(title=f"{list}:", description="> Card Canceled.", color=0x2f3136)
+                        embed.set_author(
+                            icon_url="https://cdn.discordapp.com/icons/638963040691290114/b4e6d524951945366ab6d68fbe85523e.png?size=4096",
+                            name="Bug report system")
+                        await msg.edit(embed=embed, components=[])
+            else:
+                    if list == "Script Bugs":
+                        color = 0xc773df
+                    elif list == "Building Bugs":
+                        color = 0x1c76bf
+                    else:
+                        color = 0xf5f5f5
+                    embed = Embed(color=color, title=title, description=f"**Description**\n> {descr}")
+                    embed.set_author(
+                        icon_url="https://cdn.discordapp.com/icons/638963040691290114/b4e6d524951945366ab6d68fbe85523e.png?size=4096",
+                        name="Bug report [CARD PREVIEW]")
+                    buttons = [
+                        create_button(style=ButtonStyle.green, label="Yes"),
+                        create_button(style=ButtonStyle.red, label="No (Cancel Progress)")
+                    ]
+                    action_row = create_actionrow(*buttons)
+
+
+                    await msg.edit(embed=embed, components=[action_row])
+
+                    def componentCheck(interaction):  # interaction is a ComponentContext type
+                        return ctx.author.id == interaction.author.id
+                    try:
+                        button_ctx: ComponentContext = await wait_for_component(bot, components=action_row,
+                                                                                check=componentCheck, timeout=25)
+                    except:
+                        embed = Embed(description=f"> **The timeout has been reached.**\n", color=0x2f3136)
+                        embed.set_author(
+                            icon_url="https://cdn.discordapp.com/icons/638963040691290114/b4e6d524951945366ab6d68fbe85523e.png?size=4096",
+                            name="Bug report system")
+                        await msg.edit(embed=embed, components=[])
+                        return
+                    label = button_ctx.component["label"]
+                    if label == "Yes":
+                        await ctx.send("Do wizardly trello post shit here.")
+                    else:
+                        embed = Embed(title=f"{list}:", description="> Card Canceled.", color=0x2f3136)
+                        embed.set_author(
+                            icon_url="https://cdn.discordapp.com/icons/638963040691290114/b4e6d524951945366ab6d68fbe85523e.png?size=4096",
+                            name="Bug report system")
+                        await msg.edit(embed=embed, components=[])
+
 
 
 bot.run(token(), bot=True)
